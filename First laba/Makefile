@@ -1,13 +1,28 @@
-CC=gcc
-CFLAGS=-c -Wall
+CC       = gcc
+CFLAGS   = -Wall -fsanitize=address
+SOURCES  = main.c arch.c
+INCLUDES = arch.h
+TARGET   = ./archiver
 
-all: arhivator
+VALGRIND = valgrind --tool=memcheck --leak-check=full
+ARCHIVE_NAME = archive.arch
+UNPACK_DIR = unpacked
+PACK_DIR = .
 
-arhivator: main.o 
-	$(CC) main.o -o main
+all: build
 
-main.o: main.c
-	$(CC) $(CFLAGS) main.c
+build: $(SOURCES) $(INCLUDES)
+	$(CC) $(CFLAGS) -o $(TARGET) $(SOURCES) $(INCLUDES)
+
+memcheck-pack: build
+	$(VALGRIND) $(TARGET) --pack $(PACK_DIR) $(ARCHIVE_NAME)
+
+memcheck-unpack: build
+	$(VALGRIND) $(TARGET) --unpack $(ARCHIVE_NAME) $(UNPACK_DIR)
+
+memcheck: memcheck-pack memcheck-unpack
 
 clean:
-	rm -rf *.o
+	rm -f $(TARGET)
+	rm -f $(ARCHIVE_NAME)
+	rm -rf $(UNPACK_DIR)
